@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Veículos - Estacionamento</title><link rel="stylesheet" href="/estacionamento.css"></head>
+<body><div class="app"><aside class="sidebar"><div class="brand">ESTACIONAMENTO</div><nav class="nav"><a class="" href="/painel">Dashboard</a>
+<a class="" href="/veiculos/registrar-entrada">Entrada</a>
+<a class="" href="/veiculos/saida">Saída</a>
+<a class="active" href="/veiculos">Veículos</a>
+<a class="" href="/relatorios">Relatórios</a></nav></aside>
+<main class="content">
+<div class="page-title"><h1>Veículos</h1><p>Veículos atualmente estacionados.</p></div>
+<section class="panel">
+<table class="table"><thead><tr><th>Placa</th><th>Modelo</th><th>Cor</th><th>Entrada</th><th>Status</th></tr></thead>
+<tbody><tr th:each="v:${veiculos}">
+<td th:text="${v.placa}"></td><td th:text="${v.modelo}"></td><td th:text="${v.cor}"></td>
+<td th:text="${v.horaEntrada != null ? #temporals.format(v.horaEntrada,'dd/MM/yyyy HH:mm:ss') : '-'}"></td>
+<td><span class="status"><i></i>Estacionado</span></td></tr>
+<tr th:if="${#lists.isEmpty(veiculos)}"><td colspan="5" class="empty">Nenhum veículo estacionado.</td></tr>
+</tbody></table></section></main></div></body></html>

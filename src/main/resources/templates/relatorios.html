@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatórios - Estacionamento</title>
+<link rel="stylesheet" href="/estacionamento.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar"><div class="brand">ESTACIONAMENTO</div><nav class="nav"><a class="" href="/painel">Dashboard</a>
+<a class="" href="/veiculos/registrar-entrada">Entrada</a>
+<a class="" href="/veiculos/saida">Saída</a>
+<a class="" href="/veiculos">Veículos</a>
+<a class="active" href="/relatorios">Relatórios</a></nav></aside>
+<main class="content">
+  <div class="page-title">
+    <h1>Relatórios</h1>
+    <p>Histórico de entrada e saída dos veículos.</p>
+  </div>
+
+  <section class="panel">
+    <div class="filter">
+      <div class="field"><label>Placa</label><input id="filterPlate" placeholder="Digite a placa"></div>
+      <div class="field"><label>Data</label><input id="filterDate" type="date"></div>
+      <div></div>
+      <button class="btn" type="button" onclick="clearFilters()">Limpar filtros</button>
+    </div>
+
+    <table class="table" id="reportTable">
+      <thead>
+        <tr><th>Placa</th><th>Modelo</th><th>Cor</th><th>Data</th><th>Entrada</th><th>Saída</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="veiculo : ${veiculos}">
+          <td th:text="${veiculo.placa}">ABC1D23</td>
+          <td th:text="${veiculo.modelo}">Civic</td>
+          <td th:text="${veiculo.cor}">Preto</td>
+          <td th:text="${veiculo.horaEntrada != null ? #temporals.format(veiculo.horaEntrada,'dd/MM/yyyy') : '-'}">01/10/2026</td>
+          <td th:text="${veiculo.horaEntrada != null ? #temporals.format(veiculo.horaEntrada,'HH:mm:ss') : '-'}">08:32:00</td>
+          <td th:text="${veiculo.horaSaida != null ? #temporals.format(veiculo.horaSaida,'HH:mm:ss') : '-'}">12:15:00</td>
+          <td>
+            <span class="status" th:if="${veiculo.horaSaida == null}"><i></i>Estacionado</span>
+            <span th:if="${veiculo.horaSaida != null}">Finalizado</span>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(veiculos)}"><td colspan="7" style="text-align:center;padding:25px;color:#777780">Nenhum registro encontrado.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</div>
+<script>
+const plate=document.getElementById('filterPlate'), date=document.getElementById('filterDate');
+function filter(){
+ const p=plate.value.toUpperCase(), d=date.value;
+ document.querySelectorAll('#reportTable tbody tr').forEach(r=>{
+   if(!r.cells[0]) return;
+   const okP=!p || r.cells[0].textContent.toUpperCase().includes(p);
+   const raw=r.cells[3].textContent.trim(), parts=raw.split('/');
+   const rd=parts.length===3?`${parts[2]}-${parts[1]}-${parts[0]}`:'';
+   r.style.display=okP && (!d || rd===d)?'':'none';
+ });
+}
+plate.addEventListener('input',filter); date.addEventListener('change',filter);
+function clearFilters(){plate.value='';date.value='';filter()}
+</script>
+</body></html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard | Estacionamento</title><link rel="stylesheet" href="/estacionamento.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar"><div class="brand">ESTACIONAMENTO</div><nav class="nav"><a class="active" href="/painel">Dashboard</a><a class="" href="/veiculos/registrar-entrada">Entrada</a><a class="" href="/veiculos/saida">Saída</a><a class="" href="/veiculos">Veículos</a><a class="" href="/relatorios">Relatórios</a></nav></aside>
+<main class="content">
+  <div class="page-title"><h1>Dashboard</h1><p>Acompanhe a ocupação do estacionamento em tempo real.</p></div>
+  <section class="cards">
+    <div class="card"><div class="label">Ocupadas</div><div class="number" th:text="${ocupadas}">0</div></div>
+    <div class="card"><div class="label">Disponíveis</div><div class="number" th:text="${disponiveis}">50</div></div>
+    <div class="card"><div class="label">Total</div><div class="number" th:text="${totalVagas}">50</div></div>
+  </section>
+  <div class="dashboard-grid">
+    <section class="panel">
+      <h2>Ocupação ao longo do dia</h2>
+      <div class="chart-wrap" id="chartWrap">
+        <svg viewBox="0 0 600 260" preserveAspectRatio="none">
+          <g stroke="#e5e5e5" stroke-width="1">
+            <line x1="45" y1="25" x2="580" y2="25"/><line x1="45" y1="85" x2="580" y2="85"/>
+            <line x1="45" y1="145" x2="580" y2="145"/><line x1="45" y1="205" x2="580" y2="205"/>
+          </g>
+          <g fill="#777780" font-size="11">
+            <text x="8" y="29" th:text="${totalVagas}">50</text><text x="15" y="89">35</text>
+            <text x="15" y="149">20</text><text x="22" y="209">5</text>
+          </g>
+          <polyline id="chartLine" class="chart-line" fill="none" stroke="#3f3b4a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <circle id="chartPoint" class="chart-point" cx="580" cy="205" r="7" fill="#e8e9b0" stroke="#3f3b4a" stroke-width="3"></circle>
+          <rect id="hoverArea" x="45" y="20" width="535" height="195" fill="transparent"></rect>
+          <g id="chartLabels" fill="#777780" font-size="11"></g>
+        </svg>
+        <div class="tooltip" id="chartTooltip"></div>
+      </div>
+    </section>
+    <section class="panel occupancy">
+      <h2>Ocupação atual</h2>
+      <div class="donut" id="donut"><span id="donutPercent" th:text="${totalVagas > 0 ? (ocupadas * 100 / totalVagas) + '%' : '0%'}">0%</span></div>
+      <div class="legend">
+        <span><i class="dot" style="background:#3f3b4a"></i><span th:text="${ocupadas}">0</span> ocupadas</span>
+        <span><i class="dot" style="background:#d5d5d5"></i><span th:text="${disponiveis}">50</span> livres</span>
+      </div>
+      <div class="actions">
+        <a class="button primary" href="/veiculos/registrar-entrada">Registrar entrada</a>
+        <a class="button secondary" href="/veiculos/saida">Registrar saída</a>
+      </div>
+    </section>
+  </div>
+  <section class="panel table-panel">
+    <div class="table-title">Veículos estacionados</div>
+    <table class="table" th:if="${!veiculos.isEmpty()}">
+      <thead><tr><th>Placa</th><th>Modelo</th><th>Cor</th><th>Entrada</th><th>Status</th><th>Ação</th></tr></thead>
+      <tbody>
+        <tr th:each="v : ${veiculos}">
+          <td th:text="${v.placa}"></td><td th:text="${v.modelo}"></td><td th:text="${v.cor}"></td>
+          <td th:text="${v.horaEntrada != null ? #temporals.format(v.horaEntrada, 'HH:mm') : '-'}"></td>
+          <td><span class="status"><i></i>Ativo</span></td>
+          <td><form method="post" th:action="@{/veiculos/saida/{id}(id=${v.id})}"><button class="exit-button" type="submit">Registrar saída</button></form></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="empty" th:if="${veiculos.isEmpty()}">Nenhum veículo estacionado no momento.</p>
+  </section>
+</main>
+</div>
+<script th:inline="javascript">
+const totalVagas=/*[[${totalVagas}]]*/50;
+const ocupadas=/*[[${ocupadas}]]*/0;
+const labels=/*[[${graficoLabels}]]*/["08h","10h","12h","14h","16h","18h","20h"];
+const valores=/*[[${graficoValores}]]*/[0,0,0,0,0,0,0];
+const chartLine=document.getElementById('chartLine'),chartPoint=document.getElementById('chartPoint'),chartLabels=document.getElementById('chartLabels'),chartWrap=document.getElementById('chartWrap'),hoverArea=document.getElementById('hoverArea'),tooltip=document.getElementById('chartTooltip'),donut=document.getElementById('donut');
+const xs=[45,135,225,315,405,495,580];
+function y(v){const max=Math.max(totalVagas,1);return 205-(Math.min(v,max)/max)*180}
+chartLine.setAttribute('points',valores.map((v,i)=>`${xs[i]},${y(v)}`).join(' '));
+chartPoint.setAttribute('cy',y(ocupadas));
+labels.forEach((label,i)=>{const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',xs[i]-10);t.setAttribute('y','245');t.textContent=label;chartLabels.appendChild(t)});
+const percent=totalVagas>0?Math.round(ocupadas/totalVagas*100):0;donut.style.background=`conic-gradient(#3f3b4a 0 ${percent}%,#d5d5d5 ${percent}% 100%)`;
+function showTooltip(e){const r=chartWrap.getBoundingClientRect(),rx=Math.max(0,Math.min(r.width,e.clientX-r.left)),ratio=rx/r.width;let i=Math.round(ratio*(valores.length-1));i=Math.max(0,Math.min(valores.length-1,i));const value=valores[i]||0,available=Math.max(0,totalVagas-value),rate=totalVagas>0?Math.round(value/totalVagas*100):0;tooltip.innerHTML=`<strong>${labels[i]}</strong><br>Ocupadas: ${value}<br>Disponíveis: ${available}<br>Ocupação: ${rate}%`;tooltip.style.display='block';tooltip.style.left=Math.min(rx+12,r.width-155)+'px';tooltip.style.top=Math.max(8,e.clientY-r.top-72)+'px'}
+hoverArea.addEventListener('mousemove',showTooltip);hoverArea.addEventListener('mouseenter',showTooltip);hoverArea.addEventListener('mouseleave',()=>tooltip.style.display='none');
+</script>
+</body></html>
